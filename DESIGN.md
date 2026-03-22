@@ -609,6 +609,117 @@ openclaw plugins install ~/.openclaw/workspace/projects/financial-plugin/financi
 
 ---
 
-*文档版本: 4.3*
-*最后更新: 2026-03-22*
-*特点: 新增 Add-on 与 Core 部署目录关系*
+## 十三、未来优化建议（Future Enhancements）
+
+### 13.1 量化交易 Add-on（基于 FinRL）
+
+**评估日期**: 2026-03-22  
+**来源**: [FinRL](https://github.com/AI4Finance-Foundation/FinRL)  
+**优先级**: 低（Phase 3 之后）
+
+#### FinRL 概述
+
+FinRL 是一个开源金融强化学习框架，专注于：
+- 深度强化学习交易策略（A2C, PPO, SAC, TD3, DDPG）
+- 自动化股票交易
+- 投资组合优化
+- 交易回测
+
+#### 与 financial-plugin 的关系
+
+| 维度 | FinRL | financial-plugin Core |
+|------|-------|----------------------|
+| 定位 | 量化交易/策略训练 | 财务分析/估值建模 |
+| 核心功能 | DRL 训练、回测 | 数据获取、分析 |
+| 数据源 | 13 个（OHLCV + 技术指标） | 100+（OpenBB） |
+| 财务数据 | ❌ 无 | ✅ 完整 |
+| 估值建模 | ❌ 无 | ✅ 完整 |
+
+#### 结论
+
+**FinRL 不适合作为 Core 功能**，原因：
+1. 无财务报表数据（资产负债表、利润表等）
+2. 无估值数据（EV, P/E, DCF 等）
+3. 数据仅用于强化学习训练，不适用于机构级分析
+
+#### 建议方案
+
+作为 **独立的 Add-on** 在 Phase 3 之后考虑：
+
+```
+financial-plugin/
+├── financial-core/              # Core (OpenBB 驱动)
+│   └── 11 Core Skills
+│
+├── investment-banking/          # Add-on
+├── private-equity/              # Add-on
+├── equity-research/             # Add-on
+├── wealth-management/           # Add-on
+│   └── portfolio-optimization/  # 可用 FinRL 增强
+│
+└── quant-trading/               # 🆕 未来新 Add-on
+    ├── algorithmic-trading/     # 算法交易
+    ├── portfolio-optimization/  # 组合优化（FinRL）
+    └── risk-management/         # 风险管理
+```
+
+#### 潜在 Skills
+
+| Skill | 功能 | 数据来源 |
+|-------|------|---------|
+| **portfolio-optimization** | 强化学习资产配置 | FinRL + OpenBB |
+| **algorithmic-trading** | 自动化交易策略 | FinRL Agents |
+| **risk-parity** | 风险平价模型 | FinRL + 自有数据 |
+| **tactical-asset-allocation** | 战术资产配置 | DRL 预测 |
+
+#### 技术实现
+
+```python
+# quant-trading/index.ts
+import { definePluginEntry } from "openclaw/plugin-sdk/core";
+import finrl from "finrl";  # FinRL Python 绑定
+
+export default definePluginEntry({
+  id: "quant-trading",
+  name: "Quant Trading",
+  description: "DRL-based quantitative trading strategies",
+  
+  register(api) {
+    // 组合优化 Tool
+    api.registerTool({
+      name: "optimize_portfolio",
+      description: "Optimize portfolio using FinRL",
+      async execute(params) {
+        // 调用 FinRL 训练好的 agent
+        const result = await finrl.portfolio.optimize(params);
+        return result;
+      }
+    });
+  }
+});
+```
+
+#### 依赖关系
+
+```
+quant-trading (Add-on)
+    ├── 依赖: financial-core (获取历史价格)
+    ├── 依赖: wealth-management (客户组合数据)
+    └── 依赖: FinRL (强化学习框架)
+```
+
+#### 参考资源
+
+- **GitHub**: https://github.com/AI4Finance-Foundation/FinRL
+- **文档**: https://finrl.readthedocs.io/
+- **论文**: FinRL: Deep reinforcement learning framework (ICAIF 2021)
+- **相关项目**: 
+  - FinRL-Meta: 市场环境与基准
+  - ElegantRL: DRL 算法库
+  - FinGPT: 金融大语言模型
+
+---
+
+*文档版本: 4.4*  
+*最后更新: 2026-03-22*  
+*特点: 新增 Add-on 与 Core 部署目录关系, 新增 FinRL 未来优化建议*
