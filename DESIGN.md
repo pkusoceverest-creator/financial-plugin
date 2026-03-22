@@ -90,10 +90,48 @@
 │                    financial-core (Core - 必装)                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  • 11 Data Tools (统一管理)                                                 │
-│  • 4 Core Skills (comps, dcf, lbo, merger)                                 │
+│  • 11 Core Skills (与 Anthropic 保持一致)                                   │
 │  • 核心建模能力                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 2.2 Add-on 与 Core 部署目录关系
+
+Add-on 与 Core 部署在**同级目录**，不需要嵌套：
+
+```
+~/.openclaw/extensions/
+├── financial-core/              # Core (必装)
+│   ├── package.json
+│   ├── openclaw.plugin.json
+│   ├── index.ts
+│   └── skills/                  # 11 Core Skills
+│
+├── investment-banking/          # Add-on (同级目录)
+│   ├── package.json
+│   ├── openclaw.plugin.json
+│   └── skills/                  # 9 Skills
+│
+├── private-equity/              # Add-on (同级目录)
+│   └── skills/                  # 10 Skills
+│
+├── equity-research/             # Add-on (同级目录)
+│   └── skills/                  # 9 Skills
+│
+└── wealth-management/           # Add-on (同级目录)
+    └── skills/                  # 6 Skills
+```
+
+**每个插件独立**:
+- `package.json`: 每个插件独立
+- `openclaw.plugin.json`: 每个插件独立清单
+- `index.ts`: 每个插件独立入口
+- Add-ons 通过 OpenClaw 框架引用 Core 的 Tools (非目录嵌套)
+
+**原因**:
+1. OpenClaw 按插件 ID 加载，不关心目录嵌套
+2. Add-ons 独立安装: `openclaw plugins install ./investment-banking`
+3. 便于管理: 各插件独立版本控制、测试、发布
 
 ### 2.2 分层原则
 
@@ -108,7 +146,7 @@
 
 | 类型 | 插件名 | 必装 | 包含 |
 |------|--------|------|------|
-| **Core** | financial-core | ✅ | 11 Tools + 4 Skills |
+| **Core** | financial-core | ✅ | 11 Tools + 11 Skills |
 | **Add-on** | investment-banking | ❌ | IB 扩展 Skills |
 | **Add-on** | equity-research | ❌ | ER 扩展 Skills |
 | **Add-on** | private-equity | ❌ | PE 扩展 Skills |
@@ -329,7 +367,7 @@ trigger: |
 
 ```json
 {
-  "name": "@openclaw/financial-plugin",
+  "name": "@openclaw/financial-core",
   "version": "1.0.1",
   "type": "module",
   "main": "index.ts",
@@ -361,9 +399,9 @@ trigger: |
 
 ```json
 {
-  "id": "financial-plugin",
-  "name": "Financial Plugin",
-  "description": "Financial analysis: Comps, DCF, LBO, Merger with 11 data sources",
+  "id": "financial-core",
+  "name": "Financial Core",
+  "description": "Core financial analysis with 11 data sources - Comps, DCF, LBO, Merger models",
   "version": "1.0.1",
   "configSchema": {
     "type": "object",
@@ -405,9 +443,9 @@ import { definePluginEntry } from "openclaw/plugin-sdk/core";
 import { Type } from "@sinclair/typebox";
 
 export default definePluginEntry({
-  id: "financial-plugin",
-  name: "Financial Plugin",
-  description: "Financial analysis with 11 data sources - SKILL auto-trigger",
+  id: "financial-core",
+  name: "Financial Core",
+  description: "Core financial analysis with 11 data sources - SKILL auto-trigger",
   
   register(api) {
     // 注册 11 Data Tools (按需自动调用)
@@ -446,16 +484,28 @@ export default definePluginEntry({
 
 ## 十一、实施计划
 
-### Phase 1: Core Plugin
-- [ ] financial-core 目录结构
-- [ ] 11 Tools 实现
-- [ ] 4 Core Skills (comps-analysis, dcf-model, lbo-model, merger-model)
+### Phase 1: Core Plugin (financial-core)
+- [ ] 11 Data Tools 实现
+- [ ] 11 Core Skills 实现:
+  - [ ] comps-analysis (可比公司分析)
+  - [ ] dcf-model (DCF 估值模型)
+  - [ ] lbo-model (LBO 杠杆收购模型)
+  - [ ] 3-statement-model (三表财务模型)
+  - [ ] competitive-analysis (竞争分析)
+  - [ ] deck-refresh (PPT 更新)
+  - [ ] ib-check-deck (投行 deck 检查)
+  - [ ] ppt-template-creator (PPT 模板创建)
+  - [ ] audit-xls (Excel 审计)
+  - [ ] clean-data-xls (数据清洗)
+  - [ ] skill-creator (创建新 Skill)
 
-### Phase 2: Add-ons (可选)
-- [ ] investment-banking
-- [ ] equity-research
-- [ ] private-equity
-- [ ] wealth-management
+### Phase 2: Add-ons
+| Add-on | Skills 数量 | 包含内容 |
+|--------|------------|---------|
+| investment-banking | 9 | CIM, Teaser, Pitch Deck, Merger Model, Buyer List, Deal Tracker... |
+| private-equity | 10 | Deal Sourcing, DD Checklist, IC Memo, Returns Analysis, Unit Economics... |
+| equity-research | 9 | Earnings Analysis, Initiating Coverage, Model Update, Thesis Tracker... |
+| wealth-management | 6 | Client Review, Financial Plan, Portfolio Rebalance, Tax Loss Harvesting... |
 
 ### Phase 3: 测试
 - [ ] Core 安装测试
@@ -464,6 +514,82 @@ export default definePluginEntry({
 
 ---
 
-*文档版本: 4.0*
-*最后更新: 2026-03-21*
-*特点: SKILL 自动触发，符合 OpenClaw Best Practice*
+### 附录: 45 Skills 总览
+
+| 层级 | Skills 数量 |
+|------|-------------|
+| Core (financial-core) | 11 |
+| investment-banking (Add-on) | 9 |
+| private-equity (Add-on) | 10 |
+| equity-research (Add-on) | 9 |
+| wealth-management (Add-on) | 6 |
+| **总计** | **45** |
+
+---
+
+## 十二、目录结构建议
+
+### 12.1 三类目录
+
+| 类型 | 路径 | 用途 |
+|------|------|------|
+| **设计文档** | `~/.openclaw/workspace/memory/projects/financial-plugin/` | DESIGN.md, REFERENCE.md, RULES.md |
+| **源代码 (开发)** | `~/.openclaw/workspace/projects/financial-plugin/` | Core + Add-ons 源码 |
+| **部署 (运行时)** | `~/.openclaw/extensions/` | 安装后的插件 |
+
+### 12.2 源代码目录结构
+
+```
+~/.openclaw/workspace/projects/financial-plugin/
+├── financial-core/              # Core (必装)
+│   ├── package.json
+│   ├── openclaw.plugin.json
+│   ├── index.ts
+│   ├── skills/                  # 11 Core Skills
+│   └── src/tools/               # 11 Data Tools
+│
+├── investment-banking/          # Add-on
+│   ├── package.json
+│   ├── openclaw.plugin.json
+│   └── skills/                  # 9 Skills
+│
+├── private-equity/              # Add-on
+│   └── skills/                  # 10 Skills
+│
+├── equity-research/             # Add-on
+│   └── skills/                  # 9 Skills
+│
+└── wealth-management/           # Add-on
+    └── skills/                  # 6 Skills
+```
+
+### 12.3 部署目录结构
+
+```
+~/.openclaw/extensions/
+├── financial-core/              # Core
+├── investment-banking/
+├── private-equity/
+├── equity-research/
+└── wealth-management/
+```
+
+### 12.4 安装命令
+
+```bash
+# 链接开发 (推荐开发时)
+openclaw plugins install -l ~/.openclaw/workspace/projects/financial-plugin/financial-core
+openclaw plugins install -l ~/.openclaw/workspace/projects/financial-plugin/investment-banking
+openclaw plugins install -l ~/.openclaw/workspace/projects/financial-plugin/private-equity
+openclaw plugins install -l ~/.openclaw/workspace/projects/financial-plugin/equity-research
+openclaw plugins install -l ~/.openclaw/workspace/projects/financial-plugin/wealth-management
+
+# 或复制安装 (生产环境)
+openclaw plugins install ~/.openclaw/workspace/projects/financial-plugin/financial-core
+```
+
+---
+
+*文档版本: 4.3*
+*最后更新: 2026-03-22*
+*特点: 新增 Add-on 与 Core 部署目录关系*
