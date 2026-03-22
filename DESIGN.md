@@ -373,7 +373,19 @@ trigger: |
   "main": "index.ts",
   "openclaw": {
     "extensions": ["./index.ts"],
-    "skills": ["comps-analysis", "dcf-model", "lbo-model", "merger-model"],
+    "skills": [
+      "comps-analysis",
+      "dcf-model",
+      "lbo-model",
+      "merger-model",
+      "3-statement-model",
+      "competitive-analysis",
+      "deck-refresh",
+      "ib-check-deck",
+      "ppt-template-creator",
+      "audit-xls",
+      "clean-data-xls"
+    ],
     "tools": [
       "get_historical_financials",
       "get_morningstar_data",
@@ -416,7 +428,14 @@ trigger: |
     { "id": "comps-analysis", "path": "skills/comps-analysis/SKILL.md" },
     { "id": "dcf-model", "path": "skills/dcf-model/SKILL.md" },
     { "id": "lbo-model", "path": "skills/lbo-model/SKILL.md" },
-    { "id": "merger-model", "path": "skills/merger-model/SKILL.md" }
+    { "id": "merger-model", "path": "skills/merger-model/SKILL.md" },
+    { "id": "3-statement-model", "path": "skills/3-statement-model/SKILL.md" },
+    { "id": "competitive-analysis", "path": "skills/competitive-analysis/SKILL.md" },
+    { "id": "deck-refresh", "path": "skills/deck-refresh/SKILL.md" },
+    { "id": "ib-check-deck", "path": "skills/ib-check-deck/SKILL.md" },
+    { "id": "ppt-template-creator", "path": "skills/ppt-template-creator/SKILL.md" },
+    { "id": "audit-xls", "path": "skills/audit-xls/SKILL.md" },
+    { "id": "clean-data-xls", "path": "skills/clean-data-xls/SKILL.md" }
   ],
   "tools": [
     "get_historical_financials",
