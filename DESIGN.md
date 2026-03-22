@@ -720,6 +720,266 @@ quant-trading (Add-on)
 
 ---
 
-*文档版本: 4.4*  
-*最后更新: 2026-03-22*  
-*特点: 新增 Add-on 与 Core 部署目录关系, 新增 FinRL 未来优化建议*
+## 十四、技术架构方案（Technology Architecture）
+
+### 14.1 方案对比与选择
+
+| 方案 | 数据源 | 费用 | AI 集成 | 维护成本 | 推荐度 |
+|------|--------|------|---------|----------|--------|
+| 11 MCP | 专业级 | ~$50,000/年 | 需开发 | 低 | ⭐⭐ |
+| finagg | 3 个 | 免费 | 需封装 | 中 | ⭐⭐⭐ |
+| **OpenBB** | **100+** | **免费** | **原生 MCP** | **低** | **⭐⭐⭐⭐⭐** |
+| 自研 API | 自定义 | 免费 | 需开发 | 高 | ⭐⭐ |
+
+**决策**: 采用 **OpenBB** 作为 financial-core 的数据层
+
+---
+
+### 14.2 OpenBB 架构设计
+
+#### 整体架构
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         OpenClaw Gateway                            │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                    financial-core (纯 OpenBB)                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │              OpenBB Platform (100+ 数据源)                  │   │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          │   │
+│  │  │   SEC   │ │  FRED   │ │  Yahoo  │ │  Alpha  │          │   │
+│  │  │ EDGAR   │ │         │ │ Finance │ │Vantage  │          │   │
+│  │  │(via OB) │ │         │ │         │ │         │          │   │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘          │   │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          │   │
+│  │  │Polygon  │ │Finnhub  │ │  BEA    │ │  ...    │          │   │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘          │   │
+│  │                                                             │   │
+│  │  统一接口: obb.equity.* / obb.economic.* / obb.news.*       │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│                              ↓                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │              OpenClaw Tool Layer (11 Tools)                 │   │
+│  │                                                             │   │
+│  │  ┌─────────────────────────────────────────────────────┐   │   │
+│  │  │  get_historical_financials                          │   │   │
+│  │  │  └── OpenBB: obb.equity.fundamental.*               │   │   │
+│  │  └─────────────────────────────────────────────────────┘   │   │
+│  │  ┌─────────────────────────────────────────────────────┐   │   │
+│  │  │  get_market_data                                    │   │   │
+│  │  │  └── OpenBB: obb.equity.price.*                     │   │   │
+│  │  └─────────────────────────────────────────────────────┘   │   │
+│  │  ┌─────────────────────────────────────────────────────┐   │   │
+│  │  │  get_economic_data                                  │   │   │
+│  │  │  └── OpenBB: obb.economic.*                         │   │   │
+│  │  └─────────────────────────────────────────────────────┘   │   │
+│  │  ... (共 11 个)                                           │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│                              ↓                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │              Data Processing Layer                          │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │   │
+│  │  │ DataFrame   │→│ Transformer │→│ Normalizer  │         │   │
+│  │  │ (OpenBB)    │  │ (自建)      │  │ (US GAAP)   │         │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘         │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│                              ↓                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │              Export Layer (自建)                            │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │   │
+│  │  │ Excel       │  │ JSON        │  │ Markdown    │         │   │
+│  │  │ (openpyxl)  │  │ (标准格式)   │  │ (报告)      │         │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘         │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│                              ↓                                      │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │              11 Core Skills                                 │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 14.3 11 Tools 与 OpenBB 映射
+
+| Tool | OpenBB API | 数据源 | 输出 |
+|------|-----------|--------|------|
+| **get_historical_financials** | `obb.equity.fundamental.income/balance/cash` | SEC EDGAR (via OpenBB) | 三表数据 |
+| **get_market_data** | `obb.equity.price.historical` | Yahoo Finance, Polygon | 股价、市值 |
+| **get_valuation_data** | `obb.equity.fundamental.metrics` | OpenBB 计算 | 估值倍数 |
+| **get_economic_data** | `obb.economic.indicators/gdp` | FRED, BEA | 宏观数据 |
+| **get_news** | `obb.news.company` | Finnhub, NewsAPI | 新闻 |
+| **get_industry_data** | `obb.equity.compare.groups` | OpenBB | 行业对比 |
+| **get_ownership_data** | `obb.equity.ownership` | OpenBB | 股东数据 |
+| **get_calendar** | `obb.equity.calendar` | OpenBB | 财报日历 |
+| **get_options_data** | `obb.derivatives.options` | Polygon | 期权 |
+| **get_crypto_data** | `obb.crypto.price` | CCXT, Binance | 加密货币 |
+| **get_futures_data** | `obb.derivatives.futures` | Yahoo Finance | 期货 |
+
+---
+
+### 14.4 项目结构
+
+```
+financial-core/
+├── package.json                      # npm 配置
+├── openclaw.plugin.json              # 插件清单
+├── requirements.txt                  # Python 依赖
+│   └── openbb[all]>=4.0.0
+├── index.ts                          # 入口点
+├── src/
+│   ├── tools/                        # 11 Tools（纯 OpenBB）
+│   │   ├── get_historical_financials.ts
+│   │   ├── get_market_data.ts
+│   │   ├── get_valuation_data.ts
+│   │   ├── get_economic_data.ts
+│   │   ├── get_news.ts
+│   │   ├── get_industry_data.ts
+│   │   ├── get_ownership_data.ts
+│   │   ├── get_calendar.ts
+│   │   ├── get_options_data.ts
+│   │   ├── get_crypto_data.ts
+│   │   └── get_futures_data.ts
+│   ├── adapters/                     # OpenBB 适配
+│   │   ├── openbb_client.py          # Python 桥接
+│   │   └── openbb_types.ts           # 类型定义
+│   ├── transformers/                 # 数据转换
+│   │   ├── data_transformer.ts
+│   │   └── us_gaap_mapper.ts
+│   ├── exporters/                    # 导出层
+│   │   ├── excel_exporter.ts
+│   │   ├── json_exporter.ts
+│   │   └── markdown_exporter.ts
+│   ├── validators/                   # 验证层
+│   │   ├── us_gaap_validator.ts
+│   │   └── data_quality_checker.ts
+│   ├── calculators/                  # 计算层
+│   │   ├── financial_ratios.ts
+│   │   ├── valuation_multiples.ts
+│   │   └── statistics.ts
+│   └── types/                        # 类型定义
+│       └── index.ts
+├── skills/                           # 11 Core Skills
+│   ├── comps-analysis/
+│   │   └── SKILL.md
+│   ├── dcf-model/
+│   ├── lbo-model/
+│   ├── merger-model/
+│   ├── 3-statement-model/
+│   ├── competitive-analysis/
+│   ├── deck-refresh/
+│   ├── ib-check-deck/
+│   ├── ppt-template-creator/
+│   ├── audit-xls/
+│   └── clean-data-xls/
+└── tests/
+    └── ...
+```
+
+---
+
+### 14.5 Excel 导出实现
+
+**参考 Anthropic FSI 规范，自建实现（非 AI 生成）：**
+
+```typescript
+// src/exporters/excel_exporter.ts
+import * as XLSX from 'xlsx';
+import { FinancialData } from '../types';
+
+export class ExcelExporter {
+  /**
+   * 导出可比公司分析 Excel
+   * 按照 Anthropic FSI 规范实现
+   */
+  exportComps(data: FinancialData[]): Buffer {
+    const wb = XLSX.utils.book_new();
+    
+    // Sheet 1: 封面
+    const coverWs = this.createCoverSheet(data);
+    XLSX.utils.book_append_sheet(wb, coverWs, 'Cover');
+    
+    // Sheet 2: 运营指标
+    const opsWs = this.createOperatingSheet(data);
+    XLSX.utils.book_append_sheet(wb, opsWs, 'Operating');
+    
+    // Sheet 3: 估值倍数
+    const valWs = this.createValuationSheet(data);
+    XLSX.utils.book_append_sheet(wb, valWs, 'Valuation');
+    
+    // Sheet 4: 统计数据
+    const statsWs = this.createStatisticsSheet(data);
+    XLSX.utils.book_append_sheet(wb, statsWs, 'Statistics');
+    
+    return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  }
+  
+  /**
+   * 格式规范（Anthropic FSI 标准）
+   * - Section headers: Dark blue (#1F4E79)
+   * - Column headers: Light blue (#D9E1F2)
+   * - Statistics: Light grey (#F2F2F2)
+   * - Formulas: 写入公式而非硬编码值
+   */
+  private createOperatingSheet(data: FinancialData[]): XLSX.WorkSheet {
+    const headers = ['Company', 'Revenue', 'Growth', 'Gross Margin', 'EBITDA', 'EBITDA Margin'];
+    
+    // 写入公式而非值
+    const rows = data.map((d, i) => [
+      d.ticker,
+      d.revenue,
+      `=C${i+2}/C${i+1}-1`,  // Growth formula
+      `=E${i+2}/C${i+2}`,    // Gross Margin formula
+      d.ebitda,
+      `=G${i+2}/C${i+2}`     // EBITDA Margin formula
+    ]);
+    
+    // 添加统计行 (MAX, 75%, MEDIAN, 25%, MIN)
+    const stats = this.calculateStatistics(rows);
+    rows.push(...stats);
+    
+    return XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  }
+}
+```
+
+---
+
+### 14.6 实施计划
+
+| Phase | 任务 | 时间 | 依赖 |
+|-------|------|------|------|
+| Phase 0 | OpenBB 环境搭建、API 调研 | 2 天 | - |
+| Phase 1 | 自建 Excel 导出器 | 3 天 | Phase 0 |
+| Phase 2 | 自建 US GAAP 转换器 + 验证器 | 3 天 | Phase 0 |
+| Phase 3 | 实现 11 个 Tools | 5 天 | Phase 1-2 |
+| Phase 4 | 自建财务比率计算 | 2 天 | Phase 2 |
+| Phase 5 | 测试 6 个 Skill | 3 天 | Phase 3-4 |
+| **总计** | | **18 天** | |
+
+---
+
+### 14.7 关键决策
+
+| 决策项 | 选择 | 原因 |
+|--------|------|------|
+| 数据源 | OpenBB | 100+ 免费数据源，原生 MCP 支持 |
+| Excel 导出 | 自建代码库 | 比 AI 实时生成更可靠、可测试 |
+| US GAAP 映射 | 自建 | 完全可控，符合机构级标准 |
+| 复用 us-stock-financials | ❌ 否 | 统一架构，纯 OpenBB |
+
+---
+
+*文档版本: 4.5*  
+*最后更新: 2026-03-23*  
+*特点: 新增基于 OpenBB 的技术架构方案*
