@@ -3,7 +3,34 @@
 > 基于 OpenClaw Native Plugin 架构
 > 参考: Anthropic Financial Services Plugin (11 MCP → 11 Tools)
 > 设计日期: 2026-03-21
-> 版本: 4.0 (Core + Add-on 分层设计)
+> 版本: 5.0 (OpenBB API + Anthropic FSI Skills)
+> 最后更新: 2026-03-23
+
+---
+
+## 〇、v5.0 核心设计决策
+
+### 决策 1: 数据层选择 OpenBB REST API
+
+| 对比项 | OpenBB MCP | OpenBB REST API | 决策 |
+|--------|-----------|-----------------|------|
+| 协议复杂度 | 高 (新协议) | 低 (标准 HTTP) | ✅ API |
+| Tool 控制力 | 低 (自动暴露) | 高 (完全自定义) | ✅ API |
+| 调试便利性 | 低 | 高 (curl/Postman) | ✅ API |
+| OpenClaw 兼容 | 需适配 | 原生支持 | ✅ API |
+
+**启动命令**: `openbb-api --port 6900`
+
+### 决策 2: SKILL.md 完全参考 Anthropic FSI
+
+**原则**: 逐字复制 Anthropic FSI 的 SKILL.md 内容，仅修改数据源引用。
+
+| 修改项 | Anthropic FSI | financial-plugin |
+|--------|--------------|------------------|
+| 数据源 | MCP Server (Daloopa, FactSet...) | OpenBB REST API |
+| 调用方式 | `mcp_client.call("equity.price...")` | `fetch(OPENBB_API + "/api/v1/...")` |
+| SKILL 内容 | **完全保留** | **完全保留** |
+| 公式/格式 | **完全保留** | **完全保留** |
 
 ---
 
@@ -166,21 +193,46 @@ Add-on 与 Core 部署在**同级目录**，不需要嵌套：
 
 ---
 
-## 四、11 MCP → 11 Tools 映射
+## 四、11 OpenBB Tools 定义
 
-| 序号 | MCP (Anthropic) | 对应 Tool | 功能 |
-|------|-----------------|-----------|------|
-| 1 | Daloopa | `get_historical_financials` | 历史财务数据 |
-| 2 | Morningstar | `get_morningstar_data` | 晨星分析数据 |
-| 3 | S&P Global | `get_sp_global_data` | Capital IQ 数据 |
-| 4 | FactSet | `get_factset_data` | FactSet 数据 |
-| 5 | Moody's | `get_moodys_data` | 债券/信用数据 |
-| 6 | MT Newswires | `get_news` | 实时新闻 |
-| 7 | Aiera | `get_earnings_call` | 财报电话会 |
-| 8 | LSEG | `get_lseg_data` | 债券/FX/宏观 |
-| 9 | PitchBook | `get_pitchbook_data` | PE/VC 数据 |
-| 10 | Chronograph | `get_chronograph_data` | 历史数据 |
-| 11 | Egnyte | `get_document` | 文档管理 |
+### 4.1 Tools 设计原则
+
+**Tool = 纯数据代理** (参考 Anthropic FSI 的 MCP 层设计)
+
+- Tool 只负责调用 OpenBB REST API 获取数据
+- 数据处理、计算、格式化全部在 SKILL 层完成
+- Tool 返回标准化 JSON，不做业务逻辑
+
+### 4.2 Tools 与 OpenBB API 映射
+
+| 序号 | Tool 名称 | OpenBB API 端点 | 功能 |
+|------|-----------|----------------|------|
+| 1 | `get_historical_financials` | `/api/v1/equity/fundamental/{statement}` | 财务三表 |
+| 2 | `get_market_data` | `/api/v1/equity/price/historical` | 历史股价 |
+| 3 | `get_valuation_multiples` | `/api/v1/equity/fundamental/metrics` | 估值倍数 |
+| 4 | `get_economic_data` | `/api/v1/economic/indicators` | 宏观数据 |
+| 5 | `get_news` | `/api/v1/news/company` | 公司新闻 |
+| 6 | `get_industry_peers` | `/api/v1/equity/compare/groups` | 同行公司 |
+| 7 | `get_ownership_data` | `/api/v1/equity/ownership` | 股东数据 |
+| 8 | `get_calendar_events` | `/api/v1/equity/calendar` | 财报日历 |
+| 9 | `get_options_data` | `/api/v1/derivatives/options` | 期权数据 |
+| 10 | `get_crypto_data` | `/api/v1/crypto/price/historical` | 加密货币 |
+| 11 | `get_fixed_income_data` | `/api/v1/fixedincome/...` | 债券数据 |
+
+### 4.3 与 Anthropic FSI MCP 的对应关系
+
+| Anthropic FSI MCP | financial-plugin Tool | 数据覆盖 |
+|-------------------|----------------------|---------|
+| Daloopa + FactSet | `get_historical_financials` | ✅ SEC EDGAR |
+| FactSet + S&P | `get_valuation_multiples` | ✅ 部分 (可自算) |
+| Morningstar | `get_valuation_multiples` | ✅ 部分 |
+| Moody's | `get_fixed_income_data` | ⚠️ FRED 有限 |
+| MT Newswires | `get_news` | ⚠️ Finnhub 免费 |
+| Aiera | - | ❌ 无替代 |
+| LSEG | `get_fixed_income_data` | ⚠️ FRED 有限 |
+| PitchBook | - | ❌ 无替代 |
+| Chronograph | `get_market_data` | ✅ |
+| Egnyte | - | ❌ 非数据源 |
 
 ---
 
@@ -489,7 +541,101 @@ export default definePluginEntry({
 
 ---
 
-## 十、与 v3.1 对比
+## 十、Skills 设计 (参考 Anthropic FSI)
+
+### 10.1 核心原则
+
+**Skills 内容完全参考 Anthropic FSI**，仅修改数据源调用方式：
+
+```
+Anthropic FSI                           financial-plugin
+─────────────────                       ─────────────────
+MCP Server 调用                    →    OpenBB REST API 调用
+mcp_client.call("equity.price...") →    fetch(OPENBB_API + "/api/v1/equity/price...")
+SKILL.md 内容                       →    完全保留
+公式/格式规范                        →    完全保留
+```
+
+**设计决策**: 仅保留 Skills 自动触发，不实现 Commands。用户通过自然语言交互，AI 自动匹配 Skill。
+
+### 10.2 11 Core Skills (来自 Anthropic FSI)
+
+| Skill | 来源 | SKILL.md |
+|-------|------|----------|
+| **comps-analysis** | Anthropic FSI | 可比公司分析 - 运营指标、估值倍数、统计基准 |
+| **dcf-model** | Anthropic FSI | DCF 估值模型 - 现金流预测、WACC、敏感性分析 |
+| **lbo-model** | Anthropic FSI | LBO 杠杆收购模型 - 债务结构、IRR 计算 |
+| **3-statement-model** | Anthropic FSI | 三表财务模型 - BS/IS/CF 联动 |
+| **competitive-analysis** | Anthropic FSI | 竞争分析 - 行业格局、竞争对手对比 |
+| **deck-refresh** | Anthropic FSI | PPT 更新 - 数据刷新、格式保持 |
+| **ib-check-deck** | Anthropic FSI | 投行 Deck 检查 - 质量控制清单 |
+| **ppt-template-creator** | Anthropic FSI | PPT 模板创建 - 自定义模板 |
+| **audit-xls** | Anthropic FSI | Excel 审计 - 公式检查、错误检测 |
+| **clean-data-xls** | Anthropic FSI | 数据清洗 - 格式标准化 |
+| **skill-creator** | Anthropic FSI | 创建新 Skill - Skill 编写指南 |
+
+### 10.3 SKILL.md 修改规范
+
+**原则**: 最小化修改，仅改数据源引用。
+
+#### 修改前 (Anthropic FSI)
+
+```markdown
+## Step 1: 获取财务数据
+
+使用 MCP 数据源:
+- S&P Kensho MCP: 获取历史财务数据
+- FactSet MCP: 获取估值倍数
+- Daloopa MCP: 获取 KPI 数据
+```
+
+#### 修改后 (financial-plugin)
+
+```markdown
+## Step 1: 获取财务数据
+
+使用 OpenBB REST API:
+- get_historical_financials: 获取历史财务数据
+- get_valuation_multiples: 获取估值倍数
+- get_market_data: 获取市场数据
+```
+
+#### 不修改的内容
+
+- 所有公式定义
+- 所有格式规范
+- 所有计算步骤
+- 所有输出模板
+- 所有质量检查清单
+
+### 10.5 reference 目录结构
+
+```
+skills/
+├── comps-analysis/
+│   ├── SKILL.md              # 主技能文件 (参考 Anthropic FSI)
+│   └── reference/            # 参考材料
+│       ├── examples/         # 示例文件
+│       │   └── comps_example.xlsx
+│       └── templates/        # 模板文件
+│
+├── dcf-model/
+│   ├── SKILL.md
+│   └── reference/
+│       ├── examples/
+│       │   └── dcf_example.xlsx
+│       └── templates/
+│
+├── lbo-model/
+│   ├── SKILL.md
+│   └── reference/
+│
+└── ... (其他 Skills)
+```
+
+---
+
+## 十一、与 v4.0 对比
 
 | 维度 | v3.1 (旧) | v4.0 (当前) |
 |------|----------|-------------|
