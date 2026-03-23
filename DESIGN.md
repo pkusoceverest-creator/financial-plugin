@@ -658,32 +658,107 @@ SKILL.md 内容                       →    完全保留
 - 所有计算步骤
 - 所有输出模板
 - 所有质量检查清单
+- **references 目录下的所有 .md 文件**
+- **scripts 目录下的所有脚本**
 
-### 10.5 reference 目录结构
+### 10.5 Anthropic FSI Skill 完整目录结构
+
+**重要**: 实现时需完整复制每个 skill 的所有文件和目录。
+
+#### Skill 目录结构总览
+
+| Skill | SKILL.md | references/ | scripts/ | 其他文件 |
+|-------|----------|-------------|----------|---------|
+| **comps-analysis** | ✅ | ❌ | ❌ | - |
+| **dcf-model** | ✅ | ❌ | ✅ | TROUBLESHOOTING.md, requirements.txt |
+| **lbo-model** | ✅ | ❌ | ❌ | - |
+| **3-statement-model** | ✅ | ✅ | ❌ | - |
+| **competitive-analysis** | ✅ | ✅ | ❌ | - |
+| **deck-refresh** | ✅ | ❌ | ❌ | - |
+| **ib-check-deck** | ✅ | ✅ | ✅ | - |
+| **ppt-template-creator** | ✅ | ❌ | ❌ | - |
+| **audit-xls** | ✅ | ❌ | ❌ | - |
+| **clean-data-xls** | ✅ | ❌ | ❌ | - |
+| **skill-creator** | ✅ | ✅ | ✅ | LICENSE.txt |
+
+#### references 目录内容
+
+| Skill | references 文件 | 内容 |
+|-------|----------------|------|
+| **3-statement-model** | formatting.md, formulas.md, sec-filings.md | 格式规范、公式定义、SEC 文件说明 |
+| **competitive-analysis** | frameworks.md, schemas.md | 分析框架、数据结构 |
+| **ib-check-deck** | ib-terminology.md, report-format.md | 投行术语、报告格式 |
+| **skill-creator** | output-patterns.md, workflows.md | 输出模式、工作流 |
+
+#### scripts 目录内容
+
+| Skill | scripts 文件 | 用途 |
+|-------|-------------|------|
+| **dcf-model** | validate_dcf.py | DCF 模型验证 |
+| **ib-check-deck** | extract_numbers.py | 数据提取 |
+| **skill-creator** | init_skill.py, package_skill.py, quick_validate.py | Skill 创建工具 |
+
+### 10.6 financial-plugin Skill 目录结构
 
 ```
 skills/
 ├── comps-analysis/
-│   ├── SKILL.md              # 主技能文件 (参考 Anthropic FSI)
-│   └── reference/            # 参考材料
-│       ├── examples/         # 示例文件
-│       │   └── comps_example.xlsx
-│       └── templates/        # 模板文件
+│   └── SKILL.md              # 完全复制 Anthropic FSI
 │
 ├── dcf-model/
 │   ├── SKILL.md
-│   └── reference/
-│       ├── examples/
-│       │   └── dcf_example.xlsx
-│       └── templates/
+│   ├── TROUBLESHOOTING.md    # 复制
+│   ├── requirements.txt      # 复制
+│   └── scripts/
+│       └── validate_dcf.py   # 复制
 │
 ├── lbo-model/
-│   ├── SKILL.md
-│   └── reference/
+│   └── SKILL.md
 │
-└── ... (其他 Skills)
+├── 3-statement-model/
+│   ├── SKILL.md
+│   └── references/
+│       ├── formatting.md     # 复制
+│       ├── formulas.md       # 复制
+│       └── sec-filings.md    # 复制
+│
+├── competitive-analysis/
+│   ├── SKILL.md
+│   └── references/
+│       ├── frameworks.md     # 复制
+│       └── schemas.md        # 复制
+│
+├── deck-refresh/
+│   └── SKILL.md
+│
+├── ib-check-deck/
+│   ├── SKILL.md
+│   ├── references/
+│   │   ├── ib-terminology.md # 复制
+│   │   └── report-format.md  # 复制
+│   └── scripts/
+│       └── extract_numbers.py # 复制
+│
+├── ppt-template-creator/
+│   └── SKILL.md
+│
+├── audit-xls/
+│   └── SKILL.md
+│
+├── clean-data-xls/
+│   └── SKILL.md
+│
+└── skill-creator/
+    ├── SKILL.md
+    ├── LICENSE.txt
+    ├── references/
+    │   ├── output-patterns.md # 复制
+    │   └── workflows.md       # 复制
+    └── scripts/
+        ├── init_skill.py      # 复制
+        ├── package_skill.py   # 复制
+        └── quick_validate.py  # 复制
 ```
-
 ---
 
 ## 十一、与 v4.0 对比
