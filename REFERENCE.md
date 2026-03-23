@@ -595,6 +595,137 @@ Excel / PowerPoint / Word (输出)
 
 ---
 
-*文档版本: 1.1*
-*最后更新: 2026-03-21*
+## 十四、Anthropic FSI Core Skill 完整目录结构
+
+### 14.1 Skill 目录结构总览
+
+| Skill | SKILL.md | references/ | scripts/ | 其他文件 |
+|-------|----------|-------------|----------|---------|
+| **comps-analysis** | ✅ | ❌ | ❌ | - |
+| **dcf-model** | ✅ | ❌ | ✅ | TROUBLESHOOTING.md, requirements.txt |
+| **lbo-model** | ✅ | ❌ | ❌ | - |
+| **3-statement-model** | ✅ | ✅ | ❌ | - |
+| **competitive-analysis** | ✅ | ✅ | ❌ | - |
+| **deck-refresh** | ✅ | ❌ | ❌ | - |
+| **ib-check-deck** | ✅ | ✅ | ✅ | - |
+| **ppt-template-creator** | ✅ | ❌ | ❌ | - |
+| **audit-xls** | ✅ | ❌ | ❌ | - |
+| **clean-data-xls** | ✅ | ❌ | ❌ | - |
+| **skill-creator** | ✅ | ✅ | ✅ | LICENSE.txt |
+
+### 14.2 references 目录内容
+
+| Skill | 文件 | 内容 |
+|-------|------|------|
+| **3-statement-model** | formatting.md | 格式规范 |
+| | formulas.md | 公式定义 |
+| | sec-filings.md | SEC 文件说明 |
+| **competitive-analysis** | frameworks.md | 分析框架 |
+| | schemas.md | 数据结构 |
+| **ib-check-deck** | ib-terminology.md | 投行术语 |
+| | report-format.md | 报告格式 |
+| **skill-creator** | output-patterns.md | 输出模式 |
+| | workflows.md | 工作流 |
+
+### 14.3 scripts 目录内容
+
+| Skill | 文件 | 用途 |
+|-------|------|------|
+| **dcf-model** | validate_dcf.py | DCF 模型验证 |
+| **ib-check-deck** | extract_numbers.py | 数据提取 |
+| **skill-creator** | init_skill.py | 初始化 Skill |
+| | package_skill.py | 打包 Skill |
+| | quick_validate.py | 快速验证 |
+
+---
+
+## 十五、OpenBB REST API 详细架构
+
+### 15.1 启动与配置
+
+```bash
+# 安装
+pip install openbb[all]
+
+# 启动 REST API Server
+openbb-api --port 6900
+
+# 默认配置
+# Host: 127.0.0.1
+# Port: 6900
+```
+
+### 15.2 API 端点结构
+
+```
+/api/v1/
+├── equity/                    # 股票数据
+│   ├── price/
+│   │   ├── historical         # 历史价格
+│   │   └── quote              # 实时报价
+│   ├── fundamental/
+│   │   ├── balance            # 资产负债表
+│   │   ├── income             # 利润表
+│   │   ├── cash               # 现金流量表
+│   │   ├── metrics            # 财务指标
+│   │   ├── ratios             # 财务比率
+│   │   └── transcript         # 财报转录
+│   ├── calendar/              # 财报日历
+│   ├── ownership/             # 股东数据
+│   └── compare/               # 同行对比
+│
+├── economic/                  # 宏观经济
+│   └── indicators/            # 经济指标
+│
+├── news/                      # 新闻
+│   └── company/               # 公司新闻
+│
+├── fixedincome/               # 固定收益
+│   ├── treasury_rates         # 国债利率
+│   └── corporate/             # 公司债
+│
+├── derivatives/               # 衍生品
+│   └── options/               # 期权数据
+│
+└── crypto/                    # 加密货币
+    └── price/historical       # 历史价格
+```
+
+### 15.3 免费数据源
+
+| Provider | 数据类型 | 说明 |
+|----------|---------|------|
+| **yfinance** | 股价、基本面 | Yahoo Finance，最常用 |
+| **sec** | 财务报表 | SEC EDGAR 官方 |
+| **fred** | 宏观经济 | 美联储数据库 |
+| **oecd** | 国际经济 | OECD 统计 |
+| **cboe** | 期权、波动率 | CBOE 交易所 |
+
+### 15.4 需注册的数据源
+
+| Provider | 数据类型 | 注册地址 |
+|----------|---------|---------|
+| **alpha_vantage** | 股价、技术指标 | alphavantage.co |
+| **polygon** | 股价、期权 | polygon.io |
+| **fmp** | 股价、基本面 | financialmodelingprep.com |
+| **finnhub** | 新闻、财报 | finnhub.io |
+
+### 15.5 TET 数据管道
+
+OpenBB 内置 Transform-Extract-Transform 管道：
+
+```
+请求 → Transform(参数转换) → Extract(数据提取) → Transform(数据标准化) → 返回
+```
+
+**自动处理**:
+- 字段名标准化 (lower_snake_case)
+- 类型强制转换
+- NaN/null 统一处理
+- 跨 Provider 字段映射
+
+---
+
+*文档版本: 1.2*  
+*最后更新: 2026-03-23*
 *新增: 第十三章 - 各插件 Skills 详解*
