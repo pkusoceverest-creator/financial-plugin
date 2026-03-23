@@ -1241,5 +1241,154 @@ pip install -e .
 
 ---
 
-*文档版本: 1.4*  
+## 二十二、Qlib - Microsoft AI 量化投资平台
+
+> 来源: https://github.com/microsoft/qlib
+
+### 22.1 项目概述
+
+**Qlib** 是微软开源的 AI 导向量化投资平台，覆盖量化投资全链路。
+
+**核心定位**: 从想法探索到生产实现的一站式量化平台
+
+**支持的 ML 范式**:
+- 监督学习 (Supervised Learning)
+- 市场动态建模 (Market Dynamics Modeling)
+- 强化学习 (Reinforcement Learning)
+
+### 22.2 四层架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Interface Layer (接口层)                  │
+│  Analyser: 信号分析、组合分析、执行分析                        │
+├─────────────────────────────────────────────────────────────┤
+│                    Workflow Layer (工作流层)                 │
+│  Info Extractor → Forecast Model → Decision Generator        │
+│                   ↓                                          │
+│              Execution Env (交易执行)                         │
+├─────────────────────────────────────────────────────────────┤
+│                 Learning Framework Layer (学习框架层)         │
+│  Supervised Learning | Reinforcement Learning | Meta Learning│
+├─────────────────────────────────────────────────────────────┤
+│                 Infrastructure Layer (基础设施层)            │
+│  DataServer (高性能数据服务) | Trainer (训练控制)             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 22.3 核心功能
+
+| 模块 | 功能 |
+|------|------|
+| **Data** | 高性能数据服务器、多源数据支持 |
+| **Model** | 20+ SOTA 量化模型 (LightGBM, Transformer, GATs...) |
+| **Strategy** | 交易策略生成与优化 |
+| **Execution** | 订单执行模拟 |
+| **Analysis** | 回测分析、风险分析 |
+
+### 22.4 量化投资全链路覆盖
+
+```
+数据处理 → 模型训练 → 回测评估 → 组合优化 → 订单执行
+    ↓           ↓          ↓          ↓          ↓
+ Data      Forecast    Backtest   Portfolio   Execution
+ Server     Model      Analysis   Optimizer   Simulator
+```
+
+### 22.5 最新特性: RD-Agent
+
+**RD-Agent** 是基于 LLM 的自动化量化研发代理：
+
+| 功能 | 说明 |
+|------|------|
+| **因子挖掘** | 从报告/数据自动挖掘因子 |
+| **模型优化** | 自动搜索最优模型配置 |
+| **多代理协作** | 数据中心化因子+模型联合优化 |
+
+**Demo 场景**:
+- Quant Factor Mining
+- Quant Factor Mining from reports
+- Quant Model Optimization
+
+### 22.6 量化模型库
+
+| 模型 | 类型 | 论文/来源 |
+|------|------|---------|
+| **LightGBM** | 梯度提升树 | Microsoft |
+| **Transformer** | 注意力机制 | NeurIPS 2021 |
+| **GATs** | 图注意力网络 | ICLR |
+| **HIST** | 行业感知模型 | CIKM |
+| **TCTS** | 时序模型 | AAAI |
+| **DoubleEnsemble** | 集成学习 | NeurIPS |
+| **ADD** | 概念漂移适应 | KDD |
+| **TRA** | 时序路由适配器 | ICML |
+
+### 22.7 支持的 Python 版本
+
+| Python | pip 安装 | 源码安装 | 绑图 |
+|--------|---------|---------|------|
+| 3.8 | ✅ | ✅ | ✅ |
+| 3.9 | ✅ | ✅ | ✅ |
+| 3.10 | ✅ | ✅ | ✅ |
+| 3.11 | ✅ | ✅ | ✅ |
+| 3.12 | ✅ | ✅ | ✅ |
+
+### 22.8 安装与快速开始
+
+```bash
+# 安装
+pip install pyqlib
+
+# 或从源码安装
+git clone https://github.com/microsoft/qlib.git && cd qlib
+pip install .
+
+# 准备数据 (社区数据源)
+wget https://github.com/chenditc/investment_data/releases/latest/download/qlib_bin.tar.gz
+mkdir -p ~/.qlib/qlib_data/cn_data
+tar -zxvf qlib_bin.tar.gz -C ~/.qlib/qlib_data/cn_data --strip-components=1
+
+# 运行示例
+qrun examples/benchmarks/LightGBM/workflow_config_lightgbm_Alpha158.yaml
+```
+
+### 22.9 数据支持
+
+| 数据类型 | 频率 | 说明 |
+|---------|------|------|
+| 日线数据 | 1day | 默认提供 |
+| 分钟数据 | 1min | 高频交易 |
+| Point-in-Time | - | 避免未来数据泄露 |
+| Orderbook | tick | 高频数据 |
+
+### 22.10 与 FinRL 对比
+
+| 维度 | Qlib | FinRL |
+|------|------|-------|
+| **开发方** | Microsoft | AI4Finance |
+| **核心范式** | 监督学习 + RL | 强化学习 |
+| **模型数量** | 20+ SOTA 模型 | 5 种 DRL 算法 |
+| **数据支持** | 内置数据服务器 | 外部数据源 |
+| **生产支持** | ✅ 在线服务 | ⚠️ 有限 |
+| **LLM 集成** | ✅ RD-Agent | ❌ 无 |
+
+### 22.11 与 financial-plugin 集成建议
+
+| 集成点 | 说明 |
+|--------|------|
+| **数据层** | Qlib DataServer 可作为 OpenBB 补充 |
+| **模型层** | Qlib 的预训练模型可用于信号生成 |
+| **策略层** | Qlib 的交易策略可作为决策支持 |
+| **RD-Agent** | 可用于自动化因子挖掘 |
+
+### 22.12 学术影响力
+
+| 论文 | 会议 | 引用 |
+|------|------|------|
+| Qlib: AI-oriented Quant Platform | arXiv | 高 |
+| R&D-Agent-Quant | arXiv 2025 | 新 |
+
+---
+
+*文档版本: 1.5*  
 *最后更新: 2026-03-23*
