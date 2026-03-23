@@ -1390,5 +1390,151 @@ qrun examples/benchmarks/LightGBM/workflow_config_lightgbm_Alpha158.yaml
 
 ---
 
-*文档版本: 1.5*  
+## 二十三、Open Deep Research - LangChain 开源深度研究代理
+
+> 来源: https://github.com/langchain-ai/open_deep_research
+
+### 23.1 项目概述
+
+**Open Deep Research** 是 LangChain 开源的深度研究代理框架，支持多种模型提供商、搜索工具和 MCP 服务器。
+
+**核心定位**: 可配置、完全开源的深度研究 Agent
+
+**性能**: Deep Research Bench 排行榜 #6 (RACE Score: 0.4344)
+
+### 23.2 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| **多模型支持** | OpenAI, Anthropic, OpenRouter, Ollama 本地模型 |
+| **多搜索工具** | Tavily (默认), MCP 兼容, 原生 Web 搜索 |
+| **结构化输出** | 支持工具调用和结构化输出 |
+| **可配置** | 通过 LangGraph Studio UI 配置 |
+
+### 23.3 架构设计
+
+```
+用户问题
+    │
+    ↓
+┌─────────────────────────────────────────────────────────┐
+│                   LangGraph 工作流                       │
+├─────────────────────────────────────────────────────────┤
+│  1. Summarization (gpt-4.1-mini)                        │
+│     └── 搜索 API 结果摘要                                │
+│                                                         │
+│  2. Research (gpt-4.1)                                  │
+│     └── 驱动搜索代理                                    │
+│                                                         │
+│  3. Compression (gpt-4.1)                               │
+│     └── 压缩研究发现                                    │
+│                                                         │
+│  4. Final Report (gpt-4.1)                              │
+│     └── 撰写最终报告                                    │
+└─────────────────────────────────────────────────────────┘
+    │
+    ↓
+最终研究报告
+```
+
+### 23.4 四个 LLM 任务
+
+| 任务 | 默认模型 | 功能 |
+|------|---------|------|
+| **Summarization** | gpt-4.1-mini | 搜索结果摘要 |
+| **Research** | gpt-4.1 | 驱动搜索代理 |
+| **Compression** | gpt-4.1 | 压缩研究发现 |
+| **Final Report** | gpt-4.1 | 撰写最终报告 |
+
+### 23.5 支持的搜索工具
+
+| 工具 | 说明 |
+|------|------|
+| **Tavily** | 默认搜索 API |
+| **MCP Servers** | Model Context Protocol 兼容 |
+| **Anthropic 原生** | Anthropic Web Search |
+| **OpenAI 原生** | OpenAI Web Search |
+
+### 23.6 安装与运行
+
+```bash
+# 克隆仓库
+git clone https://github.com/langchain-ai/open_deep_research.git
+cd open_deep_research
+
+# 创建虚拟环境
+uv venv
+source .venv/bin/activate
+
+# 安装依赖
+uv sync
+
+# 配置环境变量
+cp .env.example .env
+
+# 启动 LangGraph 服务器
+uvx --refresh --from "langgraph-cli[inmem]" --with-editable . --python 3.11 langgraph dev --allow-blocking
+```
+
+### 23.7 访问方式
+
+| 接口 | 地址 |
+|------|------|
+| **API** | http://127.0.0.1:2024 |
+| **Studio UI** | https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024 |
+| **API Docs** | http://127.0.0.1:2024/docs |
+
+### 23.8 Deep Research Bench 评测
+
+**评测基准**: 100 个博士级研究任务 (50 英文 + 50 中文)
+
+| 评测指标 | 说明 |
+|---------|------|
+| **RACE Score** | LLM-as-judge (Gemini) 评估 |
+| **覆盖领域** | 22 个领域 (科技、商业金融等) |
+
+**性能结果**:
+
+| 模型配置 | 成本 | Tokens | RACE Score |
+|---------|------|--------|------------|
+| GPT-5 | - | 204M | **0.4943** |
+| Claude Sonnet 4 | $187 | 139M | 0.4401 |
+| Defaults (gpt-4.1) | $46 | 58M | 0.4309 |
+
+### 23.9 两种遗留实现
+
+| 方案 | 特点 |
+|------|------|
+| **Plan-and-Execute** | 人机协作规划、迭代优化、质量导向 |
+| **Supervisor-Researcher** | 多代理并行、速度优化、MCP 支持 |
+
+### 23.10 部署选项
+
+| 平台 | 说明 |
+|------|------|
+| **LangGraph Platform** | 官方云部署 |
+| **Open Agent Platform (OAP)** | 非技术用户 UI |
+
+**OAP Demo**: https://oap.langchain.com
+
+### 23.11 相关资源
+
+| 资源 | 链接 |
+|------|------|
+| **免费课程** | LangChain Academy Deep Research |
+| **课程仓库** | deep_research_from_scratch |
+| **博客** | LangChain Blog |
+| **视频** | YouTube 概览 |
+
+### 23.12 与 financial-plugin 集成建议
+
+| 集成点 | 说明 |
+|--------|------|
+| **研究报告** | Open Deep Research 可用于生成金融研究报告 |
+| **MCP 兼容** | 可与 OpenBB MCP 集成获取金融数据 |
+| **配置复用** | LangGraph 工作流设计可参考 |
+
+---
+
+*文档版本: 1.6*  
 *最后更新: 2026-03-23*
