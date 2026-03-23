@@ -17,49 +17,6 @@
 
 ---
 
-
-### 14.1 Skill 目录结构总览
-
-| Skill | SKILL.md | references/ | scripts/ | 其他文件 |
-|-------|----------|-------------|----------|---------|
-| **comps-analysis** | ✅ | ❌ | ❌ | - |
-| **dcf-model** | ✅ | ❌ | ✅ | TROUBLESHOOTING.md, requirements.txt |
-| **lbo-model** | ✅ | ❌ | ❌ | - |
-| **3-statement-model** | ✅ | ✅ | ❌ | - |
-| **competitive-analysis** | ✅ | ✅ | ❌ | - |
-| **deck-refresh** | ✅ | ❌ | ❌ | - |
-| **ib-check-deck** | ✅ | ✅ | ✅ | - |
-| **ppt-template-creator** | ✅ | ❌ | ❌ | - |
-| **audit-xls** | ✅ | ❌ | ❌ | - |
-| **clean-data-xls** | ✅ | ❌ | ❌ | - |
-| **skill-creator** | ✅ | ✅ | ✅ | LICENSE.txt |
-
-### 14.2 references 目录内容
-
-| Skill | 文件 | 内容 |
-|-------|------|------|
-| **3-statement-model** | formatting.md | 格式规范 |
-| | formulas.md | 公式定义 |
-| | sec-filings.md | SEC 文件说明 |
-| **competitive-analysis** | frameworks.md | 分析框架 |
-| | schemas.md | 数据结构 |
-| **ib-check-deck** | ib-terminology.md | 投行术语 |
-| | report-format.md | 报告格式 |
-| **skill-creator** | output-patterns.md | 输出模式 |
-| | workflows.md | 工作流 |
-
-### 14.3 scripts 目录内容
-
-| Skill | 文件 | 用途 |
-|-------|------|------|
-| **dcf-model** | validate_dcf.py | DCF 模型验证 |
-| **ib-check-deck** | extract_numbers.py | 数据提取 |
-| **skill-creator** | init_skill.py | 初始化 Skill |
-| | package_skill.py | 打包 Skill |
-| | quick_validate.py | 快速验证 |
-
----
-
 ## 十五、OpenBB REST API 详细架构
 
 ### 15.1 启动与配置
