@@ -228,11 +228,62 @@ Add-on 与 Core 部署在**同级目录**，不需要嵌套：
 | Morningstar | `get_valuation_multiples` | ✅ 部分 |
 | Moody's | `get_fixed_income_data` | ⚠️ FRED 有限 |
 | MT Newswires | `get_news` | ⚠️ Finnhub 免费 |
-| Aiera | - | ❌ 无替代 |
+| Aiera | `get_earnings_transcript` | ⚠️ FMP 替代 |
 | LSEG | `get_fixed_income_data` | ⚠️ FRED 有限 |
 | PitchBook | - | ❌ 无替代 |
 | Chronograph | `get_market_data` | ✅ |
 | Egnyte | - | ❌ 非数据源 |
+
+### 4.4 Aiera MCP 替代方案
+
+**Aiera 提供什么**:
+- 财报电话会议转录 (管理层讨论 + Q&A)
+- 音频录音
+- 实时监控
+
+**Anthropic FSI 中使用 Aiera 的 Skills**:
+
+| 插件 | Skill | 使用程度 |
+|------|-------|---------|
+| equity-research (Add-on) | earnings-analysis | ✅ 必需 |
+| equity-research (Add-on) | earnings-preview | ✅ 必需 |
+| financial-analysis (Core) | competitive-analysis | ⚠️ 可选 |
+| financial-analysis (Core) | dcf-model | ⚠️ 提及 |
+
+**替代方案: OpenBB + FMP**
+
+```typescript
+// 新增 Tool: get_earnings_transcript
+api.registerTool({
+  name: "get_earnings_transcript",
+  description: "获取财报电话会议转录",
+  parameters: {
+    ticker: { type: "string", description: "股票代码" },
+    year: { type: "number", description: "年份" }
+  },
+  async execute(params) {
+    return fetch(
+      `${OPENBB_API}/api/v1/equity/fundamental/transcript?symbol=${params.ticker}&year=${params.year}&provider=fmp`
+    );
+  }
+});
+```
+
+**替代方案对比**:
+
+| 功能 | Aiera | OpenBB + FMP | Seeking Alpha | Finnhub |
+|------|-------|--------------|---------------|---------|
+| **文字转录** | ✅ | ✅ | ✅ | ✅ |
+| **音频** | ✅ | ❌ | ✅ | ❌ |
+| **实时监控** | ✅ | ❌ | ❌ | ⚠️ |
+| **AI 分析** | ✅ | 需自建 | ❌ | ❌ |
+| **费用** | 付费 | 免费/付费层 | 免费 | 免费/付费层 |
+| **OpenBB 集成** | ❌ | ✅ | ⚠️ 部分 | ❌ |
+
+**结论**: 
+- **Core Skills (11 个)** 不强制依赖财报转录
+- 如需 equity-research Add-on，可用 `get_earnings_transcript` (OpenBB + FMP) 替代 Aiera
+- 缺失功能: 音频录音、实时监控、AI 自动分析
 
 ---
 
