@@ -1079,5 +1079,167 @@ obb.account.login(email="your@email.com")
 
 ---
 
-*文档版本: 1.3*  
+## 二十一、FinRL - 金融强化学习框架
+
+> 来源: https://github.com/AI4Finance-Foundation/FinRL
+
+### 21.1 项目概述
+
+**FinRL** 是首个开源的金融强化学习框架，由 AI4Finance Foundation 维护。
+
+**核心定位**: 自动化量化交易策略开发
+
+**三层架构**:
+```
+┌─────────────────────────────────────┐
+│         Applications (应用层)        │
+│  股票交易 / 加密货币 / 投资组合配置    │
+├─────────────────────────────────────┤
+│           Agents (算法层)            │
+│  A2C / DDPG / PPO / TD3 / SAC       │
+├─────────────────────────────────────┤
+│       Market Environments (环境层)   │
+│  Gym-style 市场模拟环境              │
+└─────────────────────────────────────┘
+```
+
+### 21.2 开发路线图
+
+| 阶段 | 用户 | 项目 | 说明 |
+|------|------|------|------|
+| 0.0 | 入门者 | FinRL-Meta | Gym-style 市场环境 |
+| 1.0 | 开发者 | **FinRL** | 端到端自动流水线 |
+| 2.0 | 研究者 | ElegantRL | 高级算法库 |
+| 3.0 | 机构 | FinRL-X | 生产级部署 |
+
+### 21.3 支持的数据源
+
+| 数据源 | 类型 | 频率 | 限制 |
+|--------|------|------|------|
+| **YahooFinance** | 美股 | 1min | 2000/小时 |
+| **Alpaca** | 美股/ETF | 1min | 账户限制 |
+| **Binance** | 加密货币 | 1s | API 限制 |
+| **Akshare** | A股 | 1day | 账户限制 |
+| **Tushare** | A股 | 1min | 账户限制 |
+| **WRDS** | 美股 | 1ms | 5次/请求 |
+
+### 21.4 核心工作流程
+
+```
+数据下载 → 特征工程 → 模型训练 → 回测评估 → 实盘交易
+```
+
+**三步使用**:
+
+```bash
+# Step 1: 数据下载与预处理
+python examples/FinRL_StockTrading_2026_1_data.py
+# 输出: train_data.csv, trade_data.csv
+# 包含: OHLCV + 技术指标 (MACD, RSI, etc.) + VIX + 湍流指数
+
+# Step 2: 训练 DRL Agents
+python examples/FinRL_StockTrading_2026_2_train.py
+# 训练 5 种算法: A2C, DDPG, PPO, TD3, SAC
+# 模型保存: trained_models/
+
+# Step 3: 回测
+python examples/FinRL_StockTrading_2026_3_Backtest.py
+# 对比基准: MVO (均值方差优化) + DJIA 指数
+```
+
+### 21.5 支持的 DRL 算法
+
+| 算法 | 类型 | 适用场景 |
+|------|------|---------|
+| **A2C** | On-policy | 简单任务 |
+| **PPO** | On-policy | 稳定训练 |
+| **DDPG** | Off-policy | 连续动作 |
+| **TD3** | Off-policy | 改进 DDPG |
+| **SAC** | Off-policy | 自动探索 |
+
+### 21.6 文件结构
+
+```
+FinRL/
+├── finrl/
+│   ├── applications/          # 应用场景
+│   │   ├── stock_trading/     # 股票交易
+│   │   ├── cryptocurrency_trading/  # 加密货币
+│   │   ├── portfolio_allocation/    # 投资组合
+│   │   └── high_frequency_trading/  # 高频交易
+│   ├── agents/                # DRL 算法
+│   │   ├── stablebaseline3/   # SB3 实现
+│   │   ├── elegantrl/         # ElegantRL 实现
+│   │   └── rllib/             # RLlib 实现
+│   └── meta/                  # 市场环境
+│       ├── env_stock_trading/
+│       ├── data_processors/
+│       └── preprocessor/
+├── examples/                  # 示例脚本
+├── train.py                   # 训练入口
+├── test.py                    # 测试入口
+└── trade.py                   # 交易入口
+```
+
+### 21.7 技术指标
+
+**默认特征**:
+- MACD (移动平均收敛发散)
+- Bollinger Bands (布林带)
+- RSI_30 (相对强弱指数)
+- DX_30 (方向性指数)
+- Close_30_SMA (30日简单移动平均)
+- Close_60_SMA (60日简单移动平均)
+
+**可扩展**: 用户可自定义新特征
+
+### 21.8 与 financial-plugin 的集成建议
+
+| 集成点 | 说明 |
+|--------|------|
+| **数据层** | FinRL 可使用 OpenBB 作为数据源 |
+| **特征层** | OpenBB 的技术指标可注入 FinRL |
+| **策略层** | FinRL 训练的策略可作为 financial-plugin 的决策支持 |
+
+**潜在 Skill**: `rl-trading-strategy`
+- 输入: 股票池、时间范围、风险偏好
+- 过程: FinRL 训练 + 回测
+- 输出: 最优交易策略 + 回测报告
+
+### 21.9 安装
+
+```bash
+# 克隆仓库
+git clone https://github.com/AI4Finance-Foundation/FinRL.git
+cd FinRL
+
+# 创建虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+
+# 安装
+pip install -e .
+```
+
+### 21.10 相关项目
+
+| 项目 | 说明 |
+|------|------|
+| **FinRL-Meta** | 市场环境库 |
+| **ElegantRL** | 轻量级 DRL 框架 |
+| **FinGPT** | 金融大语言模型 |
+| **FinRL-X** | 生产级交易平台 |
+
+### 21.11 学术影响力
+
+| 论文 | 会议/期刊 | 引用数 |
+|------|---------|--------|
+| Practical deep RL for stock trading | NeurIPS 2018 | 303 |
+| FinRL: DRL library for automated trading | NeurIPS 2020 | 275 |
+| Ensemble strategy for stock trading | ICAIF 2020 | 426 |
+| FinRL-Meta: Market environments | NeurIPS 2022 | 136 |
+
+---
+
+*文档版本: 1.4*  
 *最后更新: 2026-03-23*
